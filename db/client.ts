@@ -44,6 +44,13 @@ CREATE TABLE IF NOT EXISTS runs (
   result TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS agent_config (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  model TEXT NOT NULL DEFAULT 'auto',
+  approval_mode TEXT NOT NULL DEFAULT 'manual',
+  review_threshold REAL NOT NULL DEFAULT 0.5,
+  updated_at TEXT DEFAULT (datetime('now'))
+);
 `;
 
 export function getDb(): DatabaseSync {
@@ -136,4 +143,52 @@ export function createRun(cardId: number, steps: string[], result: string): numb
     .prepare("INSERT INTO runs (card_id, steps_json, result) VALUES (?, ?, ?)")
     .run(cardId, JSON.stringify(steps), result);
   return Number(res.lastInsertRowid);
+}
+
+export function createCard(title: string, type = "task", status = "planned"): number {
+  const res = getDb()
+    .prepare("INSERT INTO cards (title, type, status) VALUES (?, ?, ?)")
+    .run(title, type, status);
+  return Number(res.lastInsertRowid);
+}
+
+export function setConnectionStatus(provider: string, status: string): void {
+  getDb()
+    .prepare(
+      "INSERT INTO connections (provider, status, updated_at) VALUES (?, ?, datetime('now')) ON CONFLICT(provider) DO UPDATE SET status=excluded.status, updated_at=datetime('now')"
+    )
+    .run(provider, status);
+}
+
+export interface AgentConfig {
+  model: string;
+  approval_mode: "manual" | "auto";
+  review_threshold: number;
+}
+
+export function getAgentConfig(): AgentConfig {
+  const row = getDb().prepare("SELECT * FROM agent_config WHERE id = 1").get() as
+    | (AgentConfig & { id: number })
+    | undefined;
+  return {
+    model: row?.model ?? "auto",
+    approval_mode: row?.approval_mode === "auto" ? "auto" : "manual",
+    review_threshold:
+      typeof row?.review_threshold === "number" ? row.review_threshold : 0.5,
+  };
+}
+
+export function saveAgentConfig(cfg: Partial<AgentConfig>): AgentConfig {
+  const cur = getAgentConfig();
+  const next: AgentConfig = {
+    model: cfg.model ?? cur.model,
+    approval_mode: cfg.approval_mode ?? cur.approval_mode,
+    review_threshold: cfg.review_threshold ?? cur.review_threshold,
+  };
+  getDb()
+    .prepare(
+      "INSERT INTO agent_config (id, model, approval_mode, review_threshold, updated_at) VALUES (1, ?, ?, ?, datetime('now')) ON CONFLICT(id) DO UPDATE SET model=excluded.model, approval_mode=excluded.approval_mode, review_threshold=excluded.review_threshold, updated_at=datetime('now')"
+    )
+    .run(next.model, next.approval_mode, next.review_threshold);
+  return next;
 }

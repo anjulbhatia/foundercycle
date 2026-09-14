@@ -9,19 +9,21 @@ export interface ServiceStatus {
 }
 
 /**
- * WebMCP service registry. v0 reads sqlite connection rows and reports
- * stub latency. Real health checks plug in here per provider.
+ * WebMCP service registry. Status comes from real sqlite connection rows.
+ * Latency is the measured time of the status read itself.
  */
 export function getServiceStatus(): ServiceStatus[] {
+  const t0 = Date.now();
   const db = getDb();
   const rows = db
     .prepare("SELECT provider, status FROM connections")
     .all() as { provider: string; status: string }[];
+  const latencyMs = Math.max(1, Date.now() - t0);
   return rows.map((r) => ({
     provider: r.provider as ProviderId,
     ok: r.status === "connected",
-    latencyMs: Math.round(40 + Math.random() * 120),
-    detail: r.status === "connected" ? "stub: reachable" : "disconnected",
+    latencyMs,
+    detail: r.status === "connected" ? "connected" : "disconnected",
   }));
 }
 

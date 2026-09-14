@@ -32,3 +32,11 @@ CREATE TABLE IF NOT EXISTS runs (
   result TEXT DEFAULT '',
   created_at TEXT DEFAULT (datetime('now'))
 );
+
+CREATE TABLE IF NOT EXISTS agent_config (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  model TEXT NOT NULL DEFAULT 'auto',
+  approval_mode TEXT NOT NULL DEFAULT 'manual',
+  review_threshold REAL NOT NULL DEFAULT 0.5,
+  updated_at TEXT DEFAULT (datetime('now'))
+);

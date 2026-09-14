@@ -1,10 +1,11 @@
 import {
   createRun,
+  getAgentConfig,
   getLatestProfile,
   getNextCard,
   updateCard,
 } from "@/db/client";
-import { classify, REVIEW_THRESHOLD } from "@/lib/agent/classify";
+import { classify } from "@/lib/agent/classify";
 import { runFlow } from "@/lib/agent/flows";
 
 export interface ProcessResult {
@@ -23,10 +24,11 @@ export async function processNext(approved = false): Promise<ProcessResult> {
   const card = getNextCard();
   if (!card) return { ran: false, reason: "no open cards" };
 
+  const cfg = getAgentConfig();
   const c = classify(card.title);
   const profile = getLatestProfile();
 
-  if (c.confidence < REVIEW_THRESHOLD) {
+  if (c.confidence < cfg.review_threshold) {
     const summary = `Needs review (${c.type}, ${(c.confidence * 100).toFixed(0)}%): ${c.reason}. Left in place.`;
     updateCard(card.id, { type: c.type, summary });
     createRun(card.id, [`classify: ${c.reason}`], summary);
@@ -36,7 +38,7 @@ export async function processNext(approved = false): Promise<ProcessResult> {
   const outcome = await runFlow(c.type, card.title, {
     cardId: card.id,
     cardTitle: card.title,
-    approved: approved || card.approval_flag === 1,
+    approved: approved || cfg.approval_mode === "auto" || card.approval_flag === 1,
     profileName: profile?.name ?? "",
   });
 

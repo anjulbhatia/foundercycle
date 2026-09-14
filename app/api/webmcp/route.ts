@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { PROVIDERS } from "@/lib/foundercycle";
+import { getServiceStatus } from "@/lib/integrations/registry";
 
 export async function GET() {
-  // v0 mock: report all services up. Replace with real WebMCP pings.
-  const data = PROVIDERS.map((p) => ({
-    provider: p.id,
-    label: p.label,
-    ok: true,
-    latencyMs: Math.round(40 + Math.random() * 120),
-  }));
-  return NextResponse.json(data);
+  const t0 = Date.now();
+  const statuses = getServiceStatus();
+  const measured = Date.now() - t0;
+  const labels = new Map(PROVIDERS.map((p) => [p.id, p.label]));
+  return NextResponse.json(
+    statuses.map((s) => ({
+      provider: s.provider,
+      label: labels.get(s.provider) ?? s.provider,
+      ok: s.ok,
+      latencyMs: measured + s.latencyMs,
+    }))
+  );
 }
