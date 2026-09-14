@@ -1,8 +1,7 @@
 "use client";
 
-import { ArrowRightIcon, CheckIcon } from "lucide-react";
+import { ArrowRightIcon, CalendarIcon, CheckIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ProviderIcon } from "@/lib/app-icons";
 import {
@@ -13,12 +12,12 @@ import {
 } from "@/lib/foundercycle";
 import { cn } from "cn";
 
-const TYPE_LABEL: Record<CardData["type"], string> = {
-  meeting: "meeting",
-  task: "task",
-  bug: "bug",
-  idea: "idea",
-  "follow-up": "follow-up",
+const TYPE_PILL: Record<CardData["type"], string> = {
+  meeting: "bg-sky-500/15 text-sky-700 dark:text-sky-300",
+  bug: "bg-red-500/15 text-red-700 dark:text-red-300",
+  task: "bg-amber-500/20 text-amber-700 dark:text-amber-300",
+  "follow-up": "bg-teal-500/15 text-teal-700 dark:text-teal-300",
+  idea: "bg-violet-500/15 text-violet-700 dark:text-violet-300",
 };
 
 export function KanbanCard({
@@ -32,16 +31,41 @@ export function KanbanCard({
   const active = STAGE_INDEX[card.column];
   const next = NEXT_COLUMN[card.column];
   const doneCount = Math.min(active, pipeline.length);
+  const date = card.createdAt
+    ? new Date(card.createdAt.replace(" ", "T")).toLocaleDateString([], {
+        month: "short",
+        day: "numeric",
+      })
+    : null;
 
   return (
-    <Card size="sm" className="rounded-lg transition-shadow hover:shadow-sm">
-      <CardContent className="flex flex-col gap-2 py-2.5">
-        <div className="flex items-center justify-between gap-1">
-          <Badge variant="secondary">{TYPE_LABEL[card.type]}</Badge>
+    <Card
+      size="sm"
+      className="rounded-xl border-0 bg-card shadow-xs transition-shadow hover:shadow-md"
+    >
+      <CardContent className="flex flex-col gap-2 py-3">
+        <p className="text-[13px] leading-snug font-medium">{card.title}</p>
+
+        <div className="flex items-center gap-1.5">
+          <span
+            className={cn(
+              "rounded-full px-2 py-0.5 text-[11px] font-medium",
+              TYPE_PILL[card.type]
+            )}
+          >
+            {card.type}
+          </span>
+          {date && (
+            <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+              <CalendarIcon className="size-3" />
+              {date}
+            </span>
+          )}
           {next && (
             <Button
               variant="ghost"
               size="icon-xs"
+              className="ml-auto"
               onClick={() => onAdvance(card.id)}
               aria-label={`Move to ${next}`}
               title={`Move to ${next}`}
@@ -50,8 +74,6 @@ export function KanbanCard({
             </Button>
           )}
         </div>
-
-        <p className="text-xs leading-snug font-medium">{card.title}</p>
 
         {card.summary && (
           <p className="text-[11px] leading-snug text-muted-foreground">
@@ -68,7 +90,7 @@ export function KanbanCard({
                 {i > 0 && (
                   <span
                     className={cn(
-                      "h-px w-3",
+                      "h-px w-2.5",
                       i <= doneCount ? "bg-primary" : "bg-border"
                     )}
                   />
@@ -76,10 +98,10 @@ export function KanbanCard({
                 <span
                   title={provider}
                   className={cn(
-                    "relative flex size-6 items-center justify-center rounded-full border",
-                    done && "border-primary bg-primary/10",
-                    current && "border-primary ring-2 ring-primary/30",
-                    !done && !current && "border-border bg-muted/50 opacity-70"
+                    "relative flex size-6 items-center justify-center rounded-full",
+                    done && "bg-primary/10 ring-1 ring-primary/40",
+                    current && "bg-card shadow-xs ring-2 ring-primary/40",
+                    !done && !current && "bg-muted opacity-60"
                   )}
                 >
                   <ProviderIcon provider={provider} className="size-3.5" />
@@ -93,9 +115,7 @@ export function KanbanCard({
             );
           })}
           <span className="ml-1 text-[10px] text-muted-foreground">
-            {next === null
-              ? "Done"
-              : `Stage ${doneCount + 1}/${pipeline.length}`}
+            {next === null ? "Done" : `Step ${doneCount + 1}/${pipeline.length}`}
           </span>
         </div>
       </CardContent>

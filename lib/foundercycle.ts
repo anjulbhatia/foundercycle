@@ -24,6 +24,7 @@ export interface KanbanCard {
   type: CardType;
   column: ColumnId;
   summary?: string;
+  createdAt?: string;
 }
 
 /** App pipeline per card type: where the process travels. */
