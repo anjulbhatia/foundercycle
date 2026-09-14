@@ -402,16 +402,9 @@ export function ChatPanel({ onCreate }: Props) {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Badge variant="secondary" className="ml-1 hidden sm:inline-flex">
-              <BotIcon />
-              Auto-classify
-            </Badge>
           </div>
 
           <div className="flex items-center gap-1">
-            <span className="hidden text-[11px] tabular-nums text-muted-foreground md:inline">
-              {input.length}/{MAX_LEN}
-            </span>
             <Button variant="ghost" size="icon-sm" aria-label="Voice input">
               <MicIcon />
             </Button>
