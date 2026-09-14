@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/db/client";
+import { getDb } from "foundercycle/db/client";
 
 export async function GET() {
   const db = getDb();

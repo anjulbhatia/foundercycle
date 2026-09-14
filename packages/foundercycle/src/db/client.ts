@@ -59,8 +59,13 @@ export function getDb(): DatabaseSync {
   mkdirSync(dirname(path), { recursive: true });
   db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL;");
-  const schemaPath = join(process.cwd(), "db", "schema.sql");
-  const sql = existsSync(schemaPath) ? readFileSync(schemaPath, "utf-8") : INLINE_SCHEMA;
+  const candidates = [
+    join(process.cwd(), "packages", "foundercycle", "src", "db", "schema.sql"),
+    join(process.cwd(), "..", "packages", "foundercycle", "src", "db", "schema.sql"),
+    join(process.cwd(), "..", "..", "packages", "foundercycle", "src", "db", "schema.sql"),
+  ];
+  const schemaPath = candidates.find((c) => existsSync(c));
+  const sql = schemaPath ? readFileSync(schemaPath, "utf-8") : INLINE_SCHEMA;
   db.exec(sql);
   const providers = ["gmail", "calendar", "notion", "slack", "github"];
   const insert = db.prepare(

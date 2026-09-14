@@ -4,9 +4,9 @@ import {
   getLatestProfile,
   getNextCard,
   updateCard,
-} from "@/db/client";
-import { classify } from "@/lib/agent/classify";
-import { runFlow } from "@/lib/agent/flows";
+} from "../db/client";
+import { classify } from "./classify";
+import { runFlow } from "./flows";
 
 export interface ProcessResult {
   ran: boolean;

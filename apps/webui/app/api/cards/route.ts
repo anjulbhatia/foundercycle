@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { createCard, getDb, updateCard } from "@/db/client";
+import { createCard, getDb, updateCard } from "foundercycle/db/client";
 
 export async function GET() {
   const db = getDb();

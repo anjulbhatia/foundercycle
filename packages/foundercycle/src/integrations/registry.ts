@@ -1,5 +1,5 @@
-import { getDb } from "@/db/client";
-import type { ProviderId } from "@/lib/foundercycle";
+import { getDb } from "../db/client";
+import type { ProviderId } from "../types";
 
 export interface ServiceStatus {
   provider: ProviderId;

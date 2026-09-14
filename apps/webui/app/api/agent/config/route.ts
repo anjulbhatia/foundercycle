@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAgentConfig, saveAgentConfig } from "@/db/client";
+import { getAgentConfig, saveAgentConfig } from "foundercycle/db/client";
 
 export async function GET() {
   return NextResponse.json(getAgentConfig());

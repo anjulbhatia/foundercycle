@@ -1,0 +1,13 @@
+{
+  "name": "foundercycle",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FounderCycle agent kernel: classifier, flows, integrations, sqlite store. UI-agnostic, integrates separately.",
+  "type": "module",
+  "exports": {
+    "./agent/*": "./src/agent/*.ts",
+    "./integrations/*": "./src/integrations/*.ts",
+    "./db/*": "./src/db/*",
+    "./types": "./src/types.ts"
+  }
+}

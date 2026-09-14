@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { PROVIDERS } from "@/lib/foundercycle";
-import { getServiceStatus } from "@/lib/integrations/registry";
+import { getServiceStatus } from "foundercycle/integrations/registry";
 
 export async function GET() {
   const t0 = Date.now();

@@ -19,7 +19,8 @@
       }
     ],
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "foundercycle/*": ["../../packages/foundercycle/src/*"]
     }
   },
   "include": [

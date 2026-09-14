@@ -1,4 +1,4 @@
-import type { CardType } from "@/lib/foundercycle";
+import type { CardType } from "../types";
 
 export interface Classification {
   type: CardType;

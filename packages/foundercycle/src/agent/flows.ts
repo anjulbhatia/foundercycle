@@ -1,10 +1,10 @@
-import type { CardType } from "@/lib/foundercycle";
-import type { RunContext, ToolResult } from "@/lib/integrations/types";
-import * as gmail from "@/lib/integrations/gmail";
-import * as calendar from "@/lib/integrations/calendar";
-import * as notion from "@/lib/integrations/notion";
-import * as github from "@/lib/integrations/github";
-import * as slack from "@/lib/integrations/slack";
+import type { CardType } from "../types";
+import type { RunContext, ToolResult } from "../integrations/types";
+import * as gmail from "../integrations/gmail";
+import * as calendar from "../integrations/calendar";
+import * as notion from "../integrations/notion";
+import * as github from "../integrations/github";
+import * as slack from "../integrations/slack";
 
 export interface FlowOutcome {
   summary: string;
