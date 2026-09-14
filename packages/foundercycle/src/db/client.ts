@@ -51,6 +51,12 @@ CREATE TABLE IF NOT EXISTS agent_config (
   review_threshold REAL NOT NULL DEFAULT 0.5,
   updated_at TEXT DEFAULT (datetime('now'))
 );
+CREATE TABLE IF NOT EXISTS projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  archived INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT DEFAULT (datetime('now'))
+);
 `;
 
 export function getDb(): DatabaseSync {
@@ -67,11 +73,18 @@ export function getDb(): DatabaseSync {
   const schemaPath = candidates.find((c) => existsSync(c));
   const sql = schemaPath ? readFileSync(schemaPath, "utf-8") : INLINE_SCHEMA;
   db.exec(sql);
+  // Lightweight migrations for existing ~/.foundercycle databases.
+  try {
+    db.exec("ALTER TABLE cards ADD COLUMN project_id INTEGER DEFAULT 1");
+  } catch {}
   const providers = ["gmail", "calendar", "notion", "slack", "github"];
   const insert = db.prepare(
     "INSERT OR IGNORE INTO connections (provider, status) VALUES (?, 'disconnected')"
   );
   for (const p of providers) insert.run(p);
+  db.prepare(
+    "INSERT OR IGNORE INTO projects (id, name) VALUES (1, 'My First Project')"
+  ).run();
   return db;
 }
 
@@ -95,13 +108,22 @@ export function getLatestProfile(): Profile | undefined {
 }
 
 /** Next actionable card: planned first, then ongoing, by priority. */
-export function getNextCard(): Card | undefined {
-  return getDb()
+export function getNextCard(projectId?: number): Card | undefined {
+  const db = getDb();
+  if (projectId === undefined) {
+    return db
+      .prepare(
+        `SELECT * FROM cards WHERE status IN ('planned', 'ongoing')
+         ORDER BY CASE status WHEN 'planned' THEN 0 ELSE 1 END, priority DESC, id ASC LIMIT 1`
+      )
+      .get() as Card | undefined;
+  }
+  return db
     .prepare(
-      `SELECT * FROM cards WHERE status IN ('planned', 'ongoing')
+      `SELECT * FROM cards WHERE status IN ('planned', 'ongoing') AND project_id = ?
        ORDER BY CASE status WHEN 'planned' THEN 0 ELSE 1 END, priority DESC, id ASC LIMIT 1`
     )
-    .get() as Card | undefined;
+    .get(projectId) as Card | undefined;
 }
 
 export function listCards(status?: string): Card[] {
@@ -150,10 +172,10 @@ export function createRun(cardId: number, steps: string[], result: string): numb
   return Number(res.lastInsertRowid);
 }
 
-export function createCard(title: string, type = "task", status = "planned"): number {
+export function createCard(title: string, type = "task", status = "planned", projectId = 1): number {
   const res = getDb()
-    .prepare("INSERT INTO cards (title, type, status) VALUES (?, ?, ?)")
-    .run(title, type, status);
+    .prepare("INSERT INTO cards (title, type, status, project_id) VALUES (?, ?, ?, ?)")
+    .run(title, type, status, projectId);
   return Number(res.lastInsertRowid);
 }
 
@@ -196,4 +218,31 @@ export function saveAgentConfig(cfg: Partial<AgentConfig>): AgentConfig {
     )
     .run(next.model, next.approval_mode, next.review_threshold);
   return next;
+}
+
+export interface Project {
+  id: number;
+  name: string;
+  archived: number;
+}
+
+export function listProjects(includeArchived = false): Project[] {
+  return getDb()
+    .prepare(
+      `SELECT id, name, archived FROM projects ${includeArchived ? "" : "WHERE archived = 0"} ORDER BY id ASC`
+    )
+    .all() as Project[];
+}
+
+export function createProject(name: string): number {
+  const res = getDb().prepare("INSERT INTO projects (name) VALUES (?)").run(name);
+  return Number(res.lastInsertRowid);
+}
+
+export function renameProject(id: number, name: string): void {
+  getDb().prepare("UPDATE projects SET name = ? WHERE id = ?").run(name, id);
+}
+
+export function archiveProject(id: number, archived = true): void {
+  getDb().prepare("UPDATE projects SET archived = ? WHERE id = ?").run(archived ? 1 : 0, id);
 }

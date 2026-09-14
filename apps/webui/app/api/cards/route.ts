@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { createCard, getDb, updateCard } from "foundercycle/db/client";
 
-export async function GET() {
+export async function GET(req: Request) {
   const db = getDb();
-  const rows = db
-    .prepare(
-      "SELECT id, title, type, status, priority, summary, links_json, approval_flag, created_at FROM cards ORDER BY priority DESC, id DESC"
-    )
-    .all();
+  const project = new URL(req.url).searchParams.get("project");
+  const rows = project
+    ? db
+        .prepare(
+          "SELECT id, title, type, status, priority, summary, links_json, approval_flag, created_at FROM cards WHERE project_id = ? ORDER BY priority DESC, id DESC"
+        )
+        .all(Number(project))
+    : db
+        .prepare(
+          "SELECT id, title, type, status, priority, summary, links_json, approval_flag, created_at FROM cards ORDER BY priority DESC, id DESC"
+        )
+        .all();
   return NextResponse.json(rows);
 }
 
@@ -16,11 +23,17 @@ export async function POST(req: Request) {
     title?: string;
     type?: string;
     status?: string;
+    project_id?: number;
   };
   if (!body.title?.trim()) {
     return NextResponse.json({ error: "title required" }, { status: 400 });
   }
-  const id = createCard(body.title.trim(), body.type ?? "task", body.status ?? "planned");
+  const id = createCard(
+    body.title.trim(),
+    body.type ?? "task",
+    body.status ?? "planned",
+    body.project_id ?? 1
+  );
   return NextResponse.json({ ok: true, id });
 }
 

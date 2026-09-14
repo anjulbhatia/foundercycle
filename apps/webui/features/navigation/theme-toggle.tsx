@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MoonIcon, SunIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Moon02Icon, Sun01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 
 const KEY = "fc.theme";
@@ -32,7 +33,11 @@ export function ThemeToggle() {
       onClick={toggle}
       aria-label="Toggle theme"
     >
-      {dark ? <SunIcon /> : <MoonIcon />}
+      {dark ? (
+        <HugeiconsIcon icon={Sun01Icon} strokeWidth={2} />
+      ) : (
+        <HugeiconsIcon icon={Moon02Icon} strokeWidth={2} />
+      )}
     </Button>
   );
 }

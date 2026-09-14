@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRightIcon, CalendarIcon, CheckIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight01Icon,
+  Calendar01Icon,
+  Tick01Icon,
+} from "@hugeicons/core-free-icons";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ProviderIcon } from "@/lib/app-icons";
@@ -69,7 +74,7 @@ export function KanbanCard({
           </span>
           {date && (
             <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-              <CalendarIcon className="size-3" />
+              <HugeiconsIcon icon={Calendar01Icon} strokeWidth={2} className="size-3" />
               {date}
             </span>
           )}
@@ -82,7 +87,7 @@ export function KanbanCard({
               aria-label={`Move to ${next}`}
               title={`Move to ${next}`}
             >
-              <ArrowRightIcon />
+              <HugeiconsIcon icon={ArrowRight01Icon} strokeWidth={2} />
             </Button>
           )}
         </div>
@@ -119,7 +124,7 @@ export function KanbanCard({
                   <ProviderIcon provider={provider} className="size-3.5" />
                   {done && (
                     <span className="absolute -right-1 -bottom-1 flex size-3 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <CheckIcon className="size-2" />
+                      <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-2" />
                     </span>
                   )}
                 </span>

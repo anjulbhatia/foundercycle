@@ -20,8 +20,8 @@ export interface ProcessResult {
  * Core loop, one card: read next → classify → act → write back → move.
  * Low confidence → card stays, review note written, nothing external sent.
  */
-export async function processNext(approved = false): Promise<ProcessResult> {
-  const card = getNextCard();
+export async function processNext(approved = false, projectId?: number): Promise<ProcessResult> {
+  const card = getNextCard(projectId);
   if (!card) return { ran: false, reason: "no open cards" };
 
   const cfg = getAgentConfig();

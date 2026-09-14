@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { PlusIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { PlusSignIcon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { KanbanCard } from "@/components/kanban-card";
+import { KanbanCard } from "@/features/kanban/kanban-card";
 import type { KanbanCard as CardData, ColumnId } from "@/lib/foundercycle";
 import { cn } from "cn";
 
@@ -90,7 +91,7 @@ export function KanbanColumn({ title, column, cards, onAdvance, onMove, onQuickA
           className="mt-1 justify-start text-muted-foreground"
           onClick={() => setAdding(true)}
         >
-          <PlusIcon />
+          <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
           Add new
         </Button>
       )}

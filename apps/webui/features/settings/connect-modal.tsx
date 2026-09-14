@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Tick01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -80,7 +81,7 @@ export function ConnectModal({ open, onOpenChange, connections, onSave }: Props)
                   <span className="text-sm font-medium">{p.label}</span>
                   {draft[p.id] && (
                     <Badge variant="secondary" className="gap-0.5">
-                      <CheckIcon className="size-3" />
+                      <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-3" />
                       Live
                     </Badge>
                   )}

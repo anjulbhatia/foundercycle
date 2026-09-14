@@ -1,22 +1,23 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { HugeiconsIcon, type IconSvgElement } from "@hugeicons/react";
 import {
-  ArrowUpIcon,
+  ArrowUp01Icon,
   BotIcon,
-  BugIcon,
-  CalendarPlusIcon,
-  CheckIcon,
-  CopyIcon,
-  FileIcon,
-  FileUpIcon,
+  Bug01Icon,
+  CalendarPlus01Icon,
+  Tick01Icon,
+  Copy01Icon,
+  File01Icon,
+  FileUploadIcon,
   LayoutTemplateIcon,
   LightbulbIcon,
-  MicIcon,
-  PlusIcon,
+  Mic01Icon,
+  PlusSignIcon,
   SendIcon,
-  XIcon,
-} from "lucide-react";
+  Cancel01Icon,
+} from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -85,16 +86,16 @@ interface StagedFile {
   size: string;
 }
 
-const QUICK = [
-  { icon: CalendarPlusIcon, label: "Meeting", insert: "Call Sam on Wednesday about " },
-  { icon: BugIcon, label: "Bug", insert: "Fix bug on PR #3122: " },
+const QUICK: { icon: IconSvgElement; label: string; insert: string }[] = [
+  { icon: CalendarPlus01Icon, label: "Meeting", insert: "Call Sam on Wednesday about " },
+  { icon: Bug01Icon, label: "Bug", insert: "Fix bug on PR #3122: " },
   { icon: SendIcon, label: "Task", insert: "Send proposal to Acme by Friday: " },
   { icon: LightbulbIcon, label: "Idea", insert: "Idea: " },
 ];
 
-const TYPE_ICON: Record<CardType, typeof SendIcon> = {
-  meeting: CalendarPlusIcon,
-  bug: BugIcon,
+const TYPE_ICON: Record<CardType, IconSvgElement> = {
+  meeting: CalendarPlus01Icon,
+  bug: Bug01Icon,
   task: SendIcon,
   "follow-up": SendIcon,
   idea: LightbulbIcon,
@@ -225,7 +226,7 @@ export function ChatPanel({ onCreate }: Props) {
                           size="xs"
                           onClick={() => submit(q.insert.trimEnd())}
                         >
-                          <q.icon />
+                          <HugeiconsIcon icon={q.icon} strokeWidth={2} />
                           {q.label}
                         </Button>
                       ))}
@@ -245,7 +246,7 @@ export function ChatPanel({ onCreate }: Props) {
                             <div className="flex flex-col items-end gap-1">
                               {m.files.map((f) => (
                                 <Badge key={f} variant="outline">
-                                  <FileIcon />
+                                  <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
                                   {f}
                                 </Badge>
                               ))}
@@ -264,7 +265,7 @@ export function ChatPanel({ onCreate }: Props) {
                     <MessageScrollerItem key={m.id}>
                       <Message align="start">
                         <MessageAvatar className="bg-primary/15 text-primary">
-                          <BotIcon className="size-4" />
+                          <HugeiconsIcon icon={BotIcon} strokeWidth={2} className="size-4" />
                         </MessageAvatar>
                         <MessageContent>
                           <MessageHeader>FounderCycle</MessageHeader>
@@ -277,7 +278,7 @@ export function ChatPanel({ onCreate }: Props) {
                                 const Icon = TYPE_ICON[m.type];
                                 return (
                                   <Badge variant="secondary">
-                                    <Icon />
+                                    <HugeiconsIcon icon={Icon} strokeWidth={2} />
                                     {m.type}
                                   </Badge>
                                 );
@@ -289,7 +290,11 @@ export function ChatPanel({ onCreate }: Props) {
                               onClick={() => copy(m.id, m.text)}
                               aria-label="Copy reply"
                             >
-                              {copied === m.id ? <CheckIcon /> : <CopyIcon />}
+                              {copied === m.id ? (
+                                <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} />
+                              ) : (
+                                <HugeiconsIcon icon={Copy01Icon} strokeWidth={2} />
+                              )}
                             </Button>
                           </MessageFooter>
                         </MessageContent>
@@ -302,7 +307,7 @@ export function ChatPanel({ onCreate }: Props) {
                   <MessageScrollerItem>
                     <Message align="start">
                       <MessageAvatar className="bg-primary/15 text-primary">
-                        <BotIcon className="size-4" />
+                        <HugeiconsIcon icon={BotIcon} strokeWidth={2} className="size-4" />
                       </MessageAvatar>
                       <MessageContent>
                         <div className="flex items-center gap-2 px-2.5 py-1 text-xs text-muted-foreground">
@@ -332,7 +337,7 @@ export function ChatPanel({ onCreate }: Props) {
                 setTemplatesOpen(false);
               }}
             >
-              <q.icon />
+              <HugeiconsIcon icon={q.icon} strokeWidth={2} />
               {q.label}
             </Button>
           ))}
@@ -346,7 +351,7 @@ export function ChatPanel({ onCreate }: Props) {
               {staged.map((f) => (
                 <Attachment key={f.id} size="xs" orientation="horizontal" className="rounded-lg">
                   <AttachmentMedia>
-                    <FileIcon />
+                    <HugeiconsIcon icon={File01Icon} strokeWidth={2} />
                   </AttachmentMedia>
                   <AttachmentContent>
                     <AttachmentTitle>{f.name}</AttachmentTitle>
@@ -358,7 +363,7 @@ export function ChatPanel({ onCreate }: Props) {
                     onClick={() => setStaged((s) => s.filter((x) => x.id !== f.id))}
                     aria-label={`Remove ${f.name}`}
                   >
-                    <XIcon />
+                    <HugeiconsIcon icon={Cancel01Icon} strokeWidth={2} />
                   </Button>
                 </Attachment>
               ))}
@@ -387,17 +392,17 @@ export function ChatPanel({ onCreate }: Props) {
               <DropdownMenuTrigger
                 render={
                   <Button variant="ghost" size="icon-sm" aria-label="Add">
-                    <PlusIcon />
+                    <HugeiconsIcon icon={PlusSignIcon} strokeWidth={2} />
                   </Button>
                 }
               />
               <DropdownMenuContent align="start">
                 <DropdownMenuItem onClick={() => fileRef.current?.click()}>
-                  <FileUpIcon />
+                  <HugeiconsIcon icon={FileUploadIcon} strokeWidth={2} />
                   Upload file
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setTemplatesOpen((v) => !v)}>
-                  <LayoutTemplateIcon />
+                  <HugeiconsIcon icon={LayoutTemplateIcon} strokeWidth={2} />
                   From template
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -406,7 +411,7 @@ export function ChatPanel({ onCreate }: Props) {
 
           <div className="flex items-center gap-1">
             <Button variant="ghost" size="icon-sm" aria-label="Voice input">
-              <MicIcon />
+              <HugeiconsIcon icon={Mic01Icon} strokeWidth={2} />
             </Button>
             <Button
               size="icon"
@@ -415,7 +420,7 @@ export function ChatPanel({ onCreate }: Props) {
               disabled={!canSend}
               aria-label="Send"
             >
-              <ArrowUpIcon />
+              <HugeiconsIcon icon={ArrowUp01Icon} strokeWidth={2} />
             </Button>
           </div>
         </div>
