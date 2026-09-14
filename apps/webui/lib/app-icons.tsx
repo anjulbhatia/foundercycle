@@ -24,11 +24,24 @@ export function ProviderIcon({
   className?: string;
 }) {
   const Icon = MAP[provider];
+
+  if (provider === "notion") {
+    return (
+      <Notion
+        variant={"mono"}
+        className={cn(
+          "size-4 shrink-0",
+          className
+        )}
+        aria-hidden
+      />
+    );
+  }
   return (
     <Icon
       className={cn(
         "size-4 shrink-0",
-        provider === "github" && "dark:invert",
+        (provider === "github") && "dark:invert",
         className
       )}
       aria-hidden

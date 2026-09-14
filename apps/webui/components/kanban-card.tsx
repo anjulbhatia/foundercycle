@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowRightIcon, CalendarIcon, CheckIcon } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function KanbanCard({
   card: CardData;
   onAdvance: (id: string) => void;
 }) {
+  const [dragging, setDragging] = useState(false);
   const pipeline = PIPELINES[card.type];
   const active = STAGE_INDEX[card.column];
   const next = NEXT_COLUMN[card.column];
@@ -41,7 +43,17 @@ export function KanbanCard({
   return (
     <Card
       size="sm"
-      className="rounded-xl border-0 bg-card shadow-xs transition-shadow hover:shadow-md"
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", card.id);
+        e.dataTransfer.effectAllowed = "move";
+        setDragging(true);
+      }}
+      onDragEnd={() => setDragging(false)}
+      className={cn(
+        "cursor-grab rounded-xl border-0 bg-card shadow-xs transition-all active:cursor-grabbing",
+        dragging ? "scale-[0.98] opacity-50 shadow-md" : "hover:shadow-md"
+      )}
     >
       <CardContent className="flex flex-col gap-2 py-3">
         <p className="text-[13px] leading-snug font-medium">{card.title}</p>

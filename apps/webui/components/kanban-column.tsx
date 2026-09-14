@@ -7,19 +7,21 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { KanbanCard } from "@/components/kanban-card";
 import type { KanbanCard as CardData, ColumnId } from "@/lib/foundercycle";
+import { cn } from "cn";
 
 interface Props {
   title: string;
-  dot: string;
   column: ColumnId;
   cards: CardData[];
   onAdvance: (id: string) => void;
+  onMove: (id: string, column: ColumnId) => void;
   onQuickAdd: (column: ColumnId, title: string) => void;
 }
 
-export function KanbanColumn({ title, dot, column, cards, onAdvance, onQuickAdd }: Props) {
+export function KanbanColumn({ title, column, cards, onAdvance, onMove, onQuickAdd }: Props) {
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState("");
+  const [over, setOver] = useState(false);
 
   function submit() {
     const t = draft.trim();
@@ -30,9 +32,25 @@ export function KanbanColumn({ title, dot, column, cards, onAdvance, onQuickAdd 
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-muted/40 p-2">
+    <div
+      onDragOver={(e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        setOver(true);
+      }}
+      onDragLeave={() => setOver(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setOver(false);
+        const id = e.dataTransfer.getData("text/plain");
+        if (id) onMove(id, column);
+      }}
+      className={cn(
+        "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-muted/40 p-2 transition-all",
+        over && "bg-primary/10 ring-2 ring-primary/50 ring-inset"
+      )}
+    >
       <div className="flex items-center gap-2 px-2 pt-1 pb-2">
-        <span className={`size-2 rounded-full ${dot}`} />
         <span className="text-[13px] font-semibold">{title}</span>
         <span className="text-xs text-muted-foreground">{cards.length}</span>
       </div>

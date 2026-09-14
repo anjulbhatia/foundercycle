@@ -8,10 +8,11 @@ export const PROVIDERS = [
 
 export type ProviderId = (typeof PROVIDERS)[number]["id"];
 
+/** Default board titles. Later user-configurable per board. */
 export const COLUMNS = [
-  { id: "planned", label: "Planned" },
-  { id: "ongoing", label: "Ongoing" },
-  { id: "completed", label: "Completed" },
+  { id: "planned", label: "Tasks" },
+  { id: "ongoing", label: "Running" },
+  { id: "completed", label: "Done" },
 ] as const;
 
 export type ColumnId = (typeof COLUMNS)[number]["id"];

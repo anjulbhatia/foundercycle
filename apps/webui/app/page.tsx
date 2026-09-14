@@ -109,6 +109,20 @@ export default function Home() {
     } catch {}
   }
 
+  async function handleMove(id: string, column: ColumnId) {
+    const card = cards.find((c) => c.id === id);
+    if (!card || card.column === column) return;
+    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, column } : c)));
+    try {
+      await fetch("/api/cards", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: Number(id), status: column }),
+      });
+      await reload();
+    } catch {}
+  }
+
   async function handleProcessNext() {
     setProcessing(true);
     try {
@@ -139,10 +153,7 @@ export default function Home() {
       <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 px-3 pb-3 md:grid-cols-4">
         <div className="flex min-h-0 flex-col rounded-2xl bg-muted/40 p-2">
           <div className="flex items-center gap-2 px-2 pt-1 pb-2">
-            <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-500 opacity-60" />
-              <span className="relative inline-flex size-2 rounded-full bg-green-500" />
-            </span>
+            <span className="size-2 rounded-full bg-green-500" />
             <span className="text-[13px] font-semibold">Assistant</span>
           </div>
           <div className="min-h-0 flex-1 px-1">
@@ -151,11 +162,11 @@ export default function Home() {
         </div>
         <div className="min-h-0">
           <KanbanColumn
-            title="Planned"
-            dot="bg-sky-500"
+            title="Tasks"
             column="planned"
             cards={planned}
             onAdvance={handleAdvance}
+            onMove={handleMove}
             onQuickAdd={(_, title) =>
               handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
             }
@@ -163,11 +174,11 @@ export default function Home() {
         </div>
         <div className="min-h-0">
           <KanbanColumn
-            title="Ongoing"
-            dot="bg-amber-500"
+            title="Running"
             column="ongoing"
             cards={ongoing}
             onAdvance={handleAdvance}
+            onMove={handleMove}
             onQuickAdd={(_, title) =>
               handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
             }
@@ -175,11 +186,11 @@ export default function Home() {
         </div>
         <div className="min-h-0">
           <KanbanColumn
-            title="Completed"
-            dot="bg-green-500"
+            title="Done"
             column="completed"
             cards={completed}
             onAdvance={handleAdvance}
+            onMove={handleMove}
             onQuickAdd={(_, title) =>
               handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
             }

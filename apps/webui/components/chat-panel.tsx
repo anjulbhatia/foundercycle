@@ -252,8 +252,8 @@ export function ChatPanel({ onCreate }: Props) {
                             </div>
                           )}
                           {m.text && (
-                            <Bubble variant="default" align="end">
-                              <BubbleContent>{m.text}</BubbleContent>
+                            <Bubble variant="secondary" align="end">
+                              <BubbleContent className="rounded-2xl">{m.text}</BubbleContent>
                             </Bubble>
                           )}
                           <MessageFooter>{m.time}</MessageFooter>
@@ -268,9 +268,9 @@ export function ChatPanel({ onCreate }: Props) {
                         </MessageAvatar>
                         <MessageContent>
                           <MessageHeader>FounderCycle</MessageHeader>
-                          <Bubble variant="muted" align="start">
-                            <BubbleContent>{m.text}</BubbleContent>
-                          </Bubble>
+                          <div className="px-2.5 text-xs leading-relaxed">
+                            {m.text}
+                          </div>
                           <MessageFooter className="gap-1.5 px-0">
                             {m.type &&
                               (() => {
@@ -305,12 +305,10 @@ export function ChatPanel({ onCreate }: Props) {
                         <BotIcon className="size-4" />
                       </MessageAvatar>
                       <MessageContent>
-                        <Bubble variant="muted" align="start">
-                          <BubbleContent className="flex items-center gap-2">
-                            <Spinner />
-                            Classifying…
-                          </BubbleContent>
-                        </Bubble>
+                        <div className="flex items-center gap-2 px-2.5 py-1 text-xs text-muted-foreground">
+                          <Spinner />
+                          Classifying…
+                        </div>
                       </MessageContent>
                     </Message>
                   </MessageScrollerItem>

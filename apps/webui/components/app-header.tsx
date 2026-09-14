@@ -70,18 +70,11 @@ export function AppHeader({ founderName, onProcessNext, processing }: Props) {
           <DropdownMenuTrigger
             render={
               <Button variant="ghost" size="sm">
-                <span className="relative flex size-2">
-                  <span
-                    className={`absolute inline-flex size-full animate-ping rounded-full opacity-60 ${
-                      live > 0 ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  />
-                  <span
-                    className={`relative inline-flex size-2 rounded-full ${
-                      live > 0 ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  />
-                </span>
+                <span
+                  className={`size-2 rounded-full ${
+                    live > 0 ? "bg-green-500" : "bg-red-500"
+                  }`}
+                />
                 WebMCP
               </Button>
             }
