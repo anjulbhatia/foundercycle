@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "next dev apps/webui",
+    "build": "next build apps/webui",
+    "start": "next start apps/webui",
+    "lint": "eslint apps/webui"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.69",

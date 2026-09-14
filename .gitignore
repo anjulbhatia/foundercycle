@@ -17,8 +17,8 @@ Agents.md
 /coverage
 
 # next.js
-/.next/
-/out/
+/apps/webui/.next/
+/apps/webui/out/
 
 # production
 /build
