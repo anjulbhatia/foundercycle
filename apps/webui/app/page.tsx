@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { ChatPanel } from "@/components/chat-panel";
@@ -8,6 +8,7 @@ import { KanbanColumn } from "@/components/kanban-column";
 import { getProfile } from "@/lib/store";
 import type { CardType, ColumnId, KanbanCard } from "@/lib/foundercycle";
 import { NEXT_COLUMN } from "@/lib/foundercycle";
+import { cn } from "cn";
 
 interface Row {
   id: number;
@@ -40,6 +41,11 @@ export default function Home() {
   const [cards, setCards] = useState<KanbanCard[]>([]);
   const [ready, setReady] = useState(false);
   const [processing, setProcessing] = useState(false);
+  // Chat width as % of main area. Hard floor: never under a third.
+  const [chatPct, setChatPct] = useState(34);
+  const [resizing, setResizing] = useState(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const dragRef = useRef<{ startX: number; startPct: number } | null>(null);
 
   const reload = useCallback(async () => {
     try {
@@ -150,52 +156,96 @@ export default function Home() {
         onProcessNext={handleProcessNext}
         processing={processing}
       />
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 px-3 pb-3 md:grid-cols-4">
-        <div className="flex min-h-0 flex-col rounded-2xl bg-muted/40 p-2">
+      <main ref={mainRef} className="flex min-h-0 flex-1 gap-0 overflow-hidden px-3 pb-3">
+        <section
+          style={{ width: `${chatPct}%` }}
+          className="flex min-h-0 min-w-0 flex-none flex-col rounded-2xl bg-muted/40 p-2"
+        >
           <div className="flex items-center gap-2 px-2 pt-1 pb-2">
             <span className="size-2 rounded-full bg-green-500" />
             <span className="text-[13px] font-semibold">Assistant</span>
           </div>
-          <div className="min-h-0 flex-1 px-1">
+          <div className="min-h-0 min-w-0 flex-1 px-1">
             <ChatPanel onCreate={handleCreate} />
           </div>
-        </div>
-        <div className="min-h-0">
-          <KanbanColumn
-            title="Tasks"
-            column="planned"
-            cards={planned}
-            onAdvance={handleAdvance}
-            onMove={handleMove}
-            onQuickAdd={(_, title) =>
-              handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
-            }
+        </section>
+
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize chat and board"
+          onPointerDown={(e) => {
+            (e.target as HTMLElement).setPointerCapture(e.pointerId);
+            dragRef.current = { startX: e.clientX, startPct: chatPct };
+            setResizing(true);
+          }}
+          onPointerMove={(e) => {
+            const d = dragRef.current;
+            const el = mainRef.current;
+            if (!d || !el) return;
+            const w = el.getBoundingClientRect().width;
+            if (w <= 0) return;
+            const next = d.startPct + ((e.clientX - d.startX) / w) * 100;
+            setChatPct(Math.min(60, Math.max(33, next)));
+          }}
+          onPointerUp={() => {
+            dragRef.current = null;
+            setResizing(false);
+          }}
+          onPointerCancel={() => {
+            dragRef.current = null;
+            setResizing(false);
+          }}
+          className="group mx-1 flex w-3 flex-none cursor-col-resize touch-none items-center justify-center bg-transparent outline-none"
+        >
+          <span
+            className={cn(
+              "h-10 w-1.5 rounded-full bg-border transition-opacity duration-150",
+              resizing ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+            )}
           />
         </div>
-        <div className="min-h-0">
-          <KanbanColumn
-            title="Running"
-            column="ongoing"
-            cards={ongoing}
-            onAdvance={handleAdvance}
-            onMove={handleMove}
-            onQuickAdd={(_, title) =>
-              handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
-            }
-          />
-        </div>
-        <div className="min-h-0">
-          <KanbanColumn
-            title="Done"
-            column="completed"
-            cards={completed}
-            onAdvance={handleAdvance}
-            onMove={handleMove}
-            onQuickAdd={(_, title) =>
-              handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
-            }
-          />
-        </div>
+
+        <section className="min-h-0 min-w-0 flex-1 overflow-x-auto">
+          <div className="grid h-full min-h-0 grid-cols-[repeat(3,minmax(230px,1fr))] gap-3">
+            <div className="min-h-0 min-w-0">
+              <KanbanColumn
+                title="Tasks"
+                column="planned"
+                cards={planned}
+                onAdvance={handleAdvance}
+                onMove={handleMove}
+                onQuickAdd={(_, title) =>
+                  handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
+                }
+              />
+            </div>
+            <div className="min-h-0 min-w-0">
+              <KanbanColumn
+                title="Running"
+                column="ongoing"
+                cards={ongoing}
+                onAdvance={handleAdvance}
+                onMove={handleMove}
+                onQuickAdd={(_, title) =>
+                  handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
+                }
+              />
+            </div>
+            <div className="min-h-0 min-w-0">
+              <KanbanColumn
+                title="Done"
+                column="completed"
+                cards={completed}
+                onAdvance={handleAdvance}
+                onMove={handleMove}
+                onQuickAdd={(_, title) =>
+                  handleCreate({ id: crypto.randomUUID(), title, type: "task", column: "planned" })
+                }
+              />
+            </div>
+          </div>
+        </section>
       </main>
     </div>
   );
