@@ -1,10 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AppHeader } from "@/components/app-header";
-import { ChatPanel } from "@/components/chat-panel";
-import { KanbanColumn } from "@/components/kanban-column";
+import { parseAsInteger, useQueryState } from "nuqs";
+import { trpc } from "@/lib/trpc";
+import { Sidebar } from "@/features/navigation/sidebar";
+import { LibraryModal } from "@/features/library/library-modal";
+import { ConnectModal } from "@/features/settings/connect-modal";
+import { SettingsModal } from "@/features/settings/settings-modal";
+import type { Project } from "@/features/projects/api";
+import { Button } from "@/components/ui/button";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { WandSparklesIcon } from "@hugeicons/core-free-icons";
+import { ChatPanel } from "@/features/chat/chat-panel";
+import { KanbanColumn } from "@/features/kanban/kanban-column";
 import { getProfile } from "@/lib/store";
 import type { CardType, ColumnId, KanbanCard } from "@/lib/foundercycle";
 import { NEXT_COLUMN } from "@/lib/foundercycle";
@@ -36,25 +45,48 @@ function toCard(r: Row): KanbanCard {
 }
 
 export default function Home() {
+  return (
+    <Suspense>
+      <Board />
+    </Suspense>
+  );
+}
+
+function Board() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [cards, setCards] = useState<KanbanCard[]>([]);
   const [ready, setReady] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [activeId, setActiveId] = useQueryState("project", parseAsInteger);
+  const [query, setQuery] = useQueryState("q", { defaultValue: "" });
+  const [collapsed, setCollapsed] = useState(false);
+  const [connectOpen, setConnectOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [connections, setConnections] = useState<Record<string, boolean>>({});
+  const [liveLabel, setLiveLabel] = useState("");
+
+  const utils = trpc.useUtils();
+  const projectsQuery = trpc.projects.list.useQuery(undefined, { enabled: ready });
+  const projects: Project[] = projectsQuery.data ?? [];
+  const cardsQuery = trpc.cards.listByProject.useQuery(
+    { projectId: activeId ?? 0 },
+    { enabled: ready && activeId !== null }
+  );
+  const cards = ((cardsQuery.data ?? []) as Row[]).map(toCard);
+
+  function invalidateCards() {
+    utils.cards.listByProject.invalidate();
+  }
   // Chat width as % of main area. Hard floor: never under a third.
   const [chatPct, setChatPct] = useState(34);
   const [resizing, setResizing] = useState(false);
   const mainRef = useRef<HTMLElement>(null);
   const dragRef = useRef<{ startX: number; startPct: number } | null>(null);
 
-  const reload = useCallback(async () => {
-    try {
-      const rows = (await fetch("/api/cards", { cache: "no-store" }).then((r) =>
-        r.json()
-      )) as Row[];
-      setCards(rows.map(toCard));
-    } catch {}
-  }, []);
+  const reload = () => {
+    invalidateCards();
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -85,62 +117,112 @@ export default function Home() {
 
   useEffect(() => {
     if (ready) reload();
-  }, [ready, reload]);
+  }, [ready]);
+
+  // Default to the first project once loaded and none selected.
+  useEffect(() => {
+    if (!ready || projectsQuery.isLoading || activeId !== null) return;
+    const first = projects[0];
+    if (first) setActiveId(first.id);
+  }, [ready, projectsQuery.isLoading, projects, activeId, setActiveId]);
+
+  // If the active project vanished (archived), fall back to the first.
+  useEffect(() => {
+    if (!ready || projectsQuery.isLoading || activeId === null) return;
+    if (!projects.find((p) => p.id === activeId) && projects[0]) {
+      setActiveId(projects[0].id);
+    }
+  }, [ready, projectsQuery.isLoading, projects, activeId, setActiveId]);
+
+  useEffect(() => {
+    if (!ready) return;
+    fetch("/api/connections")
+      .then((r) => r.json())
+      .then((rows: { provider: string; status: string }[]) => {
+        const map: Record<string, boolean> = {};
+        for (const r of rows) map[r.provider] = r.status === "connected";
+        setConnections(map);
+      })
+      .catch(() => {});
+    fetch("/api/webmcp")
+      .then((r) => r.json())
+      .then((ss: { ok: boolean }[]) => {
+        setLiveLabel(`${ss.filter((s) => s.ok).length}/${ss.length} live`);
+      })
+      .catch(() => {});
+  }, [ready]);
+
+  const createCardMut = trpc.cards.create.useMutation({
+    onSuccess: () => invalidateCards(),
+  });
+  const updateCardMut = trpc.cards.update.useMutation({
+    onSuccess: () => invalidateCards(),
+  });
+  const createProjectMut = trpc.projects.create.useMutation({
+    onSuccess: (r) => {
+      utils.projects.list.invalidate();
+      setActiveId(r.id);
+    },
+  });
+  const renameProjectMut = trpc.projects.rename.useMutation({
+    onSuccess: () => utils.projects.list.invalidate(),
+  });
+  const archiveProjectMut = trpc.projects.archive.useMutation({
+    onSuccess: () => utils.projects.list.invalidate(),
+  });
 
   async function handleCreate(c: KanbanCard) {
-    try {
-      await fetch("/api/cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: c.title, type: c.type, status: "planned" }),
-      });
-      await reload();
-    } catch {
-      setCards((prev) => [c, ...prev]);
-    }
+    if (activeId === null) return;
+    createCardMut.mutate({
+      title: c.title,
+      type: c.type,
+      status: "planned",
+      projectId: activeId,
+    });
   }
 
   async function handleAdvance(id: string) {
     const card = cards.find((c) => c.id === id);
     const next = card ? NEXT_COLUMN[card.column] : null;
     if (!card || !next) return;
-    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, column: next } : c)));
-    try {
-      await fetch("/api/cards", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: Number(id), status: next }),
-      });
-      await reload();
-    } catch {}
+    updateCardMut.mutate({ id: Number(id), status: next });
   }
 
   async function handleMove(id: string, column: ColumnId) {
     const card = cards.find((c) => c.id === id);
     if (!card || card.column === column) return;
-    setCards((prev) => prev.map((c) => (c.id === id ? { ...c, column } : c)));
-    try {
-      await fetch("/api/cards", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: Number(id), status: column }),
-      });
-      await reload();
-    } catch {}
+    updateCardMut.mutate({ id: Number(id), status: column });
   }
 
   async function handleProcessNext() {
+    if (activeId === null) return;
     setProcessing(true);
     try {
       await fetch("/api/agent/process-next", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ project_id: activeId }),
       });
-      await reload();
+      invalidateCards();
     } finally {
       setProcessing(false);
     }
+  }
+
+  function handleSelectProject(id: number) {
+    setActiveId(id);
+  }
+
+  function handleNewProject(projectName: string) {
+    createProjectMut.mutate({ name: projectName });
+  }
+
+  function handleRenameProject(id: number, projectName: string) {
+    renameProjectMut.mutate({ id, name: projectName });
+  }
+
+  function handleArchiveProject(id: number) {
+    archiveProjectMut.mutate({ id });
   }
 
   if (!ready) return null;
@@ -148,21 +230,46 @@ export default function Home() {
   const planned = cards.filter((c) => c.column === "planned");
   const ongoing = cards.filter((c) => c.column === "ongoing");
   const completed = cards.filter((c) => c.column === "completed");
+  const active = projects.find((p) => p.id === activeId);
 
   return (
-    <div className="flex h-screen flex-col overflow-hidden bg-background">
-      <AppHeader
+    <div className="flex h-screen overflow-hidden bg-background">
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed((c) => !c)}
+        query={query}
+        onQueryChange={setQuery}
+        projects={projects}
+        activeId={activeId}
+        onSelect={handleSelectProject}
+        onCreate={handleNewProject}
+        onRename={handleRenameProject}
+        onArchive={handleArchiveProject}
+        onOpenAutomations={() => setSettingsOpen(true)}
+        onOpenLibrary={() => setLibraryOpen(true)}
+        onOpenConnectors={() => setConnectOpen(true)}
+        onOpenSettings={() => setSettingsOpen(true)}
+        inboxItems={planned.map((c) => ({ id: c.id, title: c.title }))}
+        onAdvanceCard={handleAdvance}
         founderName={name}
-        onProcessNext={handleProcessNext}
-        processing={processing}
+        webmcpLabel={liveLabel}
       />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <div className="flex h-12 flex-none items-center justify-between px-4">
+          <div className="truncate text-sm font-semibold">
+            {active ? active.name : "FounderCycle"}
+          </div>
+          <Button size="sm" onClick={handleProcessNext} disabled={processing}>
+            <HugeiconsIcon icon={WandSparklesIcon} strokeWidth={2} />
+            {processing ? "Working…" : "Process next"}
+          </Button>
+        </div>
       <main ref={mainRef} className="flex min-h-0 flex-1 gap-0 overflow-hidden px-3 pb-3">
         <section
           style={{ width: `${chatPct}%` }}
           className="flex min-h-0 min-w-0 flex-none flex-col rounded-2xl bg-muted/40 p-2"
         >
           <div className="flex items-center gap-2 px-2 pt-1 pb-2">
-            <span className="size-2 rounded-full bg-green-500" />
             <span className="text-[13px] font-semibold">Assistant</span>
           </div>
           <div className="min-h-0 min-w-0 flex-1 px-1">
@@ -247,6 +354,28 @@ export default function Home() {
           </div>
         </section>
       </main>
+      </div>
+
+      <ConnectModal
+        open={connectOpen}
+        onOpenChange={setConnectOpen}
+        connections={connections}
+        onSave={(c) => {
+          setConnections(c);
+          fetch("/api/webmcp")
+            .then((r) => r.json())
+            .then((ss: { ok: boolean }[]) => {
+              setLiveLabel(`${ss.filter((s) => s.ok).length}/${ss.length} live`);
+            })
+            .catch(() => {});
+        }}
+      />
+      <SettingsModal
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        onProfileSaved={(n) => setName(n)}
+      />
+      <LibraryModal open={libraryOpen} onOpenChange={setLibraryOpen} />
     </div>
   );
 }

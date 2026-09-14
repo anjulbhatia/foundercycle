@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckIcon } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Tick01Icon } from "@hugeicons/core-free-icons";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -107,7 +108,7 @@ export default function OnboardingPage() {
                     <span className="text-sm font-medium">{p.label}</span>
                     {conns[p.id] && (
                       <Badge variant="secondary" className="gap-0.5">
-                        <CheckIcon className="size-3" />
+                        <HugeiconsIcon icon={Tick01Icon} strokeWidth={2} className="size-3" />
                         Live
                       </Badge>
                     )}
